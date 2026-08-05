@@ -35,11 +35,21 @@ app.use((req, res, next) => {
 });
 
 // Middleware
-app.use(helmet());
-app.use(cors({
-  origin: ['https://trishul-mx93.vercel.app', 'http://localhost:3000'],
-  credentials: true
-}));
+// Dynamic CORS Options for Vercel Serverless & Localhost
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || origin.includes('vercel.app') || origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      return callback(null, true);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
