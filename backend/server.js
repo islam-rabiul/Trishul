@@ -9,11 +9,12 @@ require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
+const allowedOrigin = ['https://trishul-mx93.vercel.app'];
 
 // Socket.io Setup
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: allowedOrigin,
     methods: ['GET', 'POST', 'PUT', 'DELETE']
   }
 });
@@ -35,7 +36,10 @@ app.use((req, res, next) => {
 
 // Middleware
 app.use(helmet());
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors({
+  origin: ['https://trishul-mx93.vercel.app', 'http://localhost:3000'],
+  credentials: true
+}));
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
