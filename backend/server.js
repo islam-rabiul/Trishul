@@ -72,8 +72,12 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start Server with HTTP & WebSockets
+// Start Server if run directly, or export for Serverless deployment
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
-  console.log(`🚀 Server with Socket.IO running on port ${PORT}`);
-});
+if (require.main === module) {
+  server.listen(PORT, () => {
+    console.log(`🚀 Server with Socket.IO running on port ${PORT}`);
+  });
+}
+
+module.exports = app;
