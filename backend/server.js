@@ -35,18 +35,39 @@ app.use((req, res, next) => {
 
 // Middleware
 app.use(helmet());
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Database Connection
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('✅ MongoDB Connected'))
-.catch(err => console.error('❌ MongoDB Connection Error:', err));
+// Serverless & Standalone Database Connection
+let cachedDb = null;
+const connectDB = async () => {
+  if (cachedDb && mongoose.connection.readyState === 1) {
+    return cachedDb;
+  }
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    throw new Error('MONGODB_URI environment variable is missing.');
+  }
+  cachedDb = await mongoose.connect(uri);
+  console.log('✅ MongoDB Connected Successfully');
+  return cachedDb;
+};
+
+// Ensure DB is connected before processing any request
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error('❌ Serverless Database Connection Error:', err.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Database Connection Error: ' + err.message
+    });
+  }
+});
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
