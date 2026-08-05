@@ -10,17 +10,24 @@ const seedData = async () => {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('MongoDB Connected for Data Seeding...');
 
-    // 1. Ensure Admin User exists
-    let admin = await User.findOne({ email: 'admin@trishul.com' });
-    if (!admin) {
-      admin = await User.create({
-        name: 'Admin User',
-        email: 'admin@trishul.com',
-        password: 'password123',
-        role: 'Admin',
-        department: 'Management'
-      });
-      console.log('Created Admin User: admin@trishul.com / password123');
+    // 1. Ensure Admin Users exist
+    const adminEmails = [
+      { name: 'Admin User', email: 'admin@trishul.com', password: 'admin123', role: 'Admin', department: 'Management' },
+      { name: 'Rabiul Islam', email: 'islamrabi@29gmail.com', password: 'admin123', role: 'Admin', department: 'Management' },
+      { name: 'Rabiul Islam', email: 'islamrabi29@gmail.com', password: 'admin123', role: 'Admin', department: 'Management' }
+    ];
+
+    let admin;
+    for (const adm of adminEmails) {
+      let existing = await User.findOne({ email: adm.email });
+      if (!existing) {
+        existing = await User.create(adm);
+        console.log(`Created Admin User: ${adm.email}`);
+      } else {
+        existing.password = adm.password;
+        await existing.save();
+      }
+      if (!admin) admin = existing;
     }
 
     // 2. Create Supervisors & Team Employees
