@@ -58,6 +58,16 @@ app.use('/api/reports', require('./routes/reports'));
 app.use('/api/settings', require('./routes/settings'));
 app.use('/api/ai', require('./routes/ai'));
 
+// Root welcome handler
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Trishul CRM Backend API Service Serverless Endpoint',
+    status: 'Operational',
+    health: '/api/health'
+  });
+});
+
 // Health Check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Trishul CRM API is running with Socket.IO Realtime' });
