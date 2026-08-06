@@ -260,8 +260,9 @@ export default function DashboardPage() {
                     <XAxis dataKey="month" stroke="#9ca3af" fontSize={12} tickLine={false} />
                     <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} />
                     <Tooltip
-                      contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '0.5rem', color: '#fff' }}
-                      itemStyle={{ color: '#60a5fa' }}
+                      contentStyle={{ backgroundColor: '#111827', borderColor: '#4b5563', borderRadius: '0.75rem', color: '#ffffff', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.7)' }}
+                      itemStyle={{ color: '#60a5fa', fontWeight: 600 }}
+                      labelStyle={{ color: '#ffffff', fontWeight: 600 }}
                     />
                     <Area
                       type="monotone"
@@ -303,8 +304,9 @@ export default function DashboardPage() {
                     <XAxis dataKey="month" stroke="#9ca3af" fontSize={12} tickLine={false} />
                     <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} />
                     <Tooltip
-                      contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '0.5rem', color: '#fff' }}
-                      itemStyle={{ color: '#38bdf8' }}
+                      contentStyle={{ backgroundColor: '#111827', borderColor: '#4b5563', borderRadius: '0.75rem', color: '#ffffff', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.7)' }}
+                      itemStyle={{ color: '#38bdf8', fontWeight: 600 }}
+                      labelStyle={{ color: '#ffffff', fontWeight: 600 }}
                     />
                     <Bar dataKey="customers" fill="#0284c7" radius={[4, 4, 0, 0]} />
                   </BarChart>

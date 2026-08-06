@@ -330,7 +330,9 @@ export default function ReportsPage() {
                   ))}
                 </Pie>
                 <Tooltip
-                  contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '0.5rem', color: '#fff' }}
+                  contentStyle={{ backgroundColor: '#111827', borderColor: '#4b5563', borderRadius: '0.75rem', color: '#ffffff', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.7)' }}
+                  itemStyle={{ color: '#ffffff', fontWeight: 600, fontSize: '0.875rem' }}
+                  labelStyle={{ color: '#ffffff', fontWeight: 600, fontSize: '0.875rem' }}
                 />
                 <Legend
                   verticalAlign="bottom"
