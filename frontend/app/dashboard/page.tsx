@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Target, CheckSquare, DollarSign, TrendingUp, Activity, FileText, Calendar, ArrowRight } from 'lucide-react'
+import { Users, Target, CheckSquare, IndianRupee, TrendingUp, Activity, FileText, Calendar, ArrowRight } from 'lucide-react'
 import api from '@/lib/axios'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
@@ -172,7 +172,7 @@ export default function DashboardPage() {
         { title: 'Total Customers', value: stats.totalCustomers, icon: Users, color: 'bg-blue-500/20' },
         { title: 'Total Leads', value: stats.totalLeads, icon: Target, color: 'bg-purple-500/20' },
         { title: 'Active Employees', value: stats.activeEmployees, icon: Activity, color: 'bg-green-500/20' },
-        { title: 'Total Revenue', value: formatCurrency(stats.revenue), icon: DollarSign, color: 'bg-yellow-500/30', highlight: true },
+        { title: 'Total Revenue', value: formatCurrency(stats.revenue), icon: IndianRupee, color: 'bg-yellow-500/30', highlight: true },
         { title: 'Pending Tasks', value: stats.pendingTasks, icon: CheckSquare, color: 'bg-red-500/20' },
       ]
     : isSupervisor
@@ -180,7 +180,7 @@ export default function DashboardPage() {
           { title: 'Team Customers', value: stats.totalCustomers, icon: Users, color: 'bg-blue-500/20' },
           { title: 'Team Leads', value: stats.totalLeads, icon: Target, color: 'bg-purple-500/20' },
           { title: 'Team Members', value: stats.activeEmployees, icon: Activity, color: 'bg-green-500/20' },
-          { title: 'Team Revenue', value: formatCurrency(stats.revenue), icon: DollarSign, color: 'bg-yellow-500/30', highlight: true },
+          { title: 'Team Revenue', value: formatCurrency(stats.revenue), icon: IndianRupee, color: 'bg-yellow-500/30', highlight: true },
           { title: 'Team Tasks Due', value: stats.pendingTasks, icon: CheckSquare, color: 'bg-red-500/20' },
         ]
       : [

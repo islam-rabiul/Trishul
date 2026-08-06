@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Search, Edit, Trash2, DollarSign, X } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, IndianRupee, X } from 'lucide-react'
 import Portal from '@/components/Portal'
 import api from '@/lib/axios'
-import { formatDate } from '@/lib/utils'
+import { formatDate, formatCurrency } from '@/lib/utils'
 
 interface Lead {
   _id: string
@@ -210,8 +210,8 @@ export default function LeadsPage() {
             <div className="space-y-3 mb-4">
               {lead.estimatedValue > 0 && (
                 <p className="text-sm flex items-center gap-1 text-green-400">
-                  <DollarSign className="w-4 h-4" />
-                  Est. Value: ${lead.estimatedValue.toLocaleString()}
+                  <IndianRupee className="w-4 h-4" />
+                  Est. Value: {formatCurrency(lead.estimatedValue)}
                 </p>
               )}
               {lead.assignedUser && (
@@ -361,7 +361,7 @@ export default function LeadsPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1.5">Estimated Value ($)</label>
+                        <label className="block text-sm font-medium text-gray-300 mb-1.5">Estimated Value (₹)</label>
                         <input type="number" value={formData.estimatedValue}
                           onChange={(e) => setFormData({ ...formData, estimatedValue: Number(e.target.value) })}
                           placeholder="0"

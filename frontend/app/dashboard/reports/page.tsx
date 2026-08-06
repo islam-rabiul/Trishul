@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Download, TrendingUp, Users, DollarSign, CheckCircle } from 'lucide-react'
+import { Download, TrendingUp, Users, IndianRupee, CheckCircle } from 'lucide-react'
 import api from '@/lib/axios'
 import { formatCurrency } from '@/lib/utils'
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
@@ -157,7 +157,7 @@ export default function ReportsPage() {
 
     if (topEmployees.length > 0) {
       csv += 'TOP PERFORMING EMPLOYEES\n'
-      csv += 'Name,Total Leads,Won Leads,Conversion Rate (%),Total Value ($)\n'
+      csv += 'Name,Total Leads,Won Leads,Conversion Rate (%),Total Value (₹)\n'
       topEmployees.forEach(e => {
         csv += `"${e.name}",${e.totalLeads},${e.wonLeads},${(e.conversionRate || 0).toFixed(1)},${e.totalValue}\n`
       })
@@ -260,7 +260,7 @@ export default function ReportsPage() {
         >
           <div className="flex items-center gap-4">
             <div className="p-3 bg-green-500/20 rounded-lg">
-              <DollarSign className="w-6 h-6 text-green-400" />
+              <IndianRupee className="w-6 h-6 text-green-400" />
             </div>
             <div>
               <p className="text-gray-400 text-sm">Total Revenue</p>

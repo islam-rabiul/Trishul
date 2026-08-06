@@ -98,7 +98,7 @@ exports.processCommand = async (req, res) => {
       if (topEmployee.length > 0) {
         const emp = topEmployee[0];
         const conversionRate = ((emp.wonLeads / emp.totalLeads) * 100).toFixed(1);
-        response = `🏆 Top Performing Employee:\n• Name: ${emp.user.name}\n• Email: ${emp.user.email}\n• Total Leads: ${emp.totalLeads}\n• Won Leads: ${emp.wonLeads}\n• Conversion Rate: ${conversionRate}%\n• Total Value: $${emp.totalValue.toLocaleString()}`;
+        response = `🏆 Top Performing Employee:\n• Name: ${emp.user.name}\n• Email: ${emp.user.email}\n• Total Leads: ${emp.totalLeads}\n• Won Leads: ${emp.wonLeads}\n• Conversion Rate: ${conversionRate}%\n• Total Value: ₹${emp.totalValue.toLocaleString()}`;
       } else {
         response = 'No employee data available yet.';
       }
