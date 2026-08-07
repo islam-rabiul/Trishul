@@ -6,26 +6,38 @@ const User = require('../models/User');
 exports.getEmployees = async (req, res) => {
   try {
     const { page = 1, limit = 10, search, role } = req.query;
-    
+
     let query = {};
-    
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } }
-      ];
-    }
-    
+
     if (role) {
       query.role = role;
     }
-    
-    // Supervisors can only see their team
+
+    // Bug 5 fix: build search and scope conditions separately, then combine
+    // them with $and so neither clobbers the other when both are present.
+    const conditions = [];
+
+    if (search) {
+      conditions.push({
+        $or: [
+          { name:  { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } }
+        ]
+      });
+    }
+
     if (req.user.role === 'Supervisor') {
-      query.$or = [
-        { supervisorId: req.user.id },
-        { _id: req.user.id }
-      ];
+      // Supervisors can only see their own team members (and themselves)
+      conditions.push({
+        $or: [
+          { supervisorId: req.user.id },
+          { _id: req.user.id }
+        ]
+      });
+    }
+
+    if (conditions.length > 0) {
+      query.$and = conditions;
     }
     
     const employees = await User.find(query)

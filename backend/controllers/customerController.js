@@ -23,15 +23,8 @@ exports.getCustomers = async (req, res) => {
       query.status = status;
     }
     
-    // Role-based filtering
-    if (req.user.role === 'User') {
-      query.createdBy = req.user.id;
-    } else if (req.user.role === 'Supervisor') {
-      const supervisedUsers = await User.find({ supervisorId: req.user.id }).select('_id');
-      const userIds = supervisedUsers.map(u => u._id);
-      userIds.push(req.user.id);
-      query.createdBy = { $in: userIds };
-    }
+    // All roles (Admin, Supervisor, User) see the full customer list — read-only
+    // access is enforced in the UI and on mutating routes (POST/PUT/DELETE).
     
     const customers = await Customer.find(query)
       .populate('createdBy', 'name email')
@@ -72,9 +65,8 @@ exports.getCustomer = async (req, res) => {
         message: 'Customer not found'
       });
     }
-    if (!(await isInScope(req.user, customer.createdBy))) {
-      return res.status(403).json({ success: false, message: 'You are not allowed to access this customer' });
-    }
+    // All authenticated users can view any customer record (read-only).
+    // Mutating operations (update/delete) are restricted to Admin at route level.
     
     res.status(200).json({
       success: true,

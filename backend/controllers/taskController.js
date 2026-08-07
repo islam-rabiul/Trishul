@@ -26,17 +26,14 @@ exports.getTasks = async (req, res) => {
       query.priority = priority;
     }
     
-    // Role-based filtering
+    // Role-based filtering:
+    // - Admin     → no filter (sees all tasks)
+    // - Supervisor → no filter (sees all tasks)
+    // - User      → restricted to their own assigned tasks
     if (req.user.role === 'User') {
-      // Users see ONLY their assigned tasks
       query.assignedTo = req.user.id;
-    } else if (req.user.role === 'Supervisor') {
-      const supervisedUsers = await User.find({ supervisorId: req.user.id }).select('_id');
-      const userIds = supervisedUsers.map(u => u._id);
-      userIds.push(req.user.id);
-      query.assignedTo = { $in: userIds };
     }
-    // Admin sees all tasks (no filter)
+    // Admin and Supervisor see all tasks (no filter)
     
     const tasks = await Task.find(query)
       .populate('assignedTo', 'name email role')
@@ -262,13 +259,12 @@ exports.getTaskStats = async (req, res) => {
   try {
     let query = {};
     
+    // Role-based filtering:
+    // - Admin     → no filter
+    // - Supervisor → no filter
+    // - User      → restricted to their own assigned tasks
     if (req.user.role === 'User') {
       query.assignedTo = req.user.id;
-    } else if (req.user.role === 'Supervisor') {
-      const supervisedUsers = await User.find({ supervisorId: req.user.id }).select('_id');
-      const userIds = supervisedUsers.map(u => u._id);
-      userIds.push(req.user.id);
-      query.assignedTo = { $in: userIds };
     }
     
     const pending = await Task.countDocuments({ ...query, status: 'Pending' });

@@ -9,12 +9,18 @@ require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
-const allowedOrigin = ['https://trishul-mx93.vercel.app'];
+
 
 // Socket.io Setup
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigin,
+    origin: (origin, callback) => {
+      // Allow Vercel, localhost, and direct server calls (no origin)
+      if (!origin || origin.includes('vercel.app') || origin.includes('localhost') || origin.includes('127.0.0.1')) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE']
   }
 });

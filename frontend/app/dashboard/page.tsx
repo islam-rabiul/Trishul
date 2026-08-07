@@ -105,9 +105,14 @@ function QuickAction({ title, description, icon: Icon, color, onClick }: QuickAc
   )
 }
 
+// Month abbreviation map for chart X-axis labels
+const MONTH_ABBR = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
 export default function DashboardPage() {
   const router = useRouter()
   const [userRole, setUserRole] = useState<'Admin' | 'Supervisor' | 'User'>('User')
+  // scope is always 'global' from the backend — all roles see company-wide totals.
+  // We keep userRole only for quick-action links and chart/activity visibility.
   const [mounted, setMounted] = useState(false)
   const [stats, setStats] = useState<DashboardStats>({
     totalCustomers: 0,
@@ -117,25 +122,51 @@ export default function DashboardPage() {
     pendingTasks: 0
   })
   const [recentActivities, setRecentActivities] = useState<any[]>([])
-  const [chartData, setChartData] = useState([
-    { month: 'Jan', leads: 40, customers: 24 },
-    { month: 'Feb', leads: 55, customers: 30 },
-    { month: 'Mar', leads: 70, customers: 45 },
-    { month: 'Apr', leads: 65, customers: 50 },
-    { month: 'May', leads: 85, customers: 62 },
-    { month: 'Jun', leads: 95, customers: 78 },
-    { month: 'Jul', leads: 110, customers: 88 },
-    { month: 'Aug', leads: 125, customers: 95 },
-  ])
+  // Bug 7 fix: start with an empty array — real data is populated from the API
+  const [chartData, setChartData] = useState<{ month: string; leads: number; customers: number }[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchDashboardStats = useCallback(async () => {
     try {
       const response = await api.get('/api/reports/dashboard')
       if (response.data.success) {
-        setStats(response.data.data.stats)
-        if (response.data.data.recentActivities) {
-          setRecentActivities(response.data.data.recentActivities)
+        const { stats: apiStats, trends, recentActivities: activities } = response.data.data
+
+        setStats(apiStats)
+        // scope is always 'global' — no per-role override needed
+
+        if (activities) setRecentActivities(activities)
+
+        // Bug 7 fix: build a merged chart dataset from real DB trend data.
+        // Both monthlyLeads and monthlyCustomers use { _id: { year, month }, count }.
+        if (trends?.monthlyLeads || trends?.monthlyCustomers) {
+          // Collect all unique year-month keys present in either dataset
+          const keyMap: Record<string, { leads: number; customers: number }> = {}
+
+          ;(trends.monthlyLeads ?? []).forEach((item: { _id: { year: number; month: number }; count: number }) => {
+            const key = `${item._id.year}-${String(item._id.month).padStart(2, '0')}`
+            if (!keyMap[key]) keyMap[key] = { leads: 0, customers: 0 }
+            keyMap[key].leads = item.count
+          })
+
+          ;(trends.monthlyCustomers ?? []).forEach((item: { _id: { year: number; month: number }; count: number }) => {
+            const key = `${item._id.year}-${String(item._id.month).padStart(2, '0')}`
+            if (!keyMap[key]) keyMap[key] = { leads: 0, customers: 0 }
+            keyMap[key].customers = item.count
+          })
+
+          const merged = Object.keys(keyMap)
+            .sort()
+            .map(key => {
+              const [, monthStr] = key.split('-')
+              return {
+                month: MONTH_ABBR[parseInt(monthStr, 10)],
+                leads: keyMap[key].leads,
+                customers: keyMap[key].customers
+              }
+            })
+
+          setChartData(merged)
         }
       }
     } catch (error) {
@@ -167,27 +198,16 @@ export default function DashboardPage() {
 
   const isAdmin = userRole === 'Admin'
   const isSupervisor = userRole === 'Supervisor'
-  const cards = isAdmin
-    ? [
-        { title: 'Total Customers', value: stats.totalCustomers, icon: Users, color: 'bg-blue-500/20' },
-        { title: 'Total Leads', value: stats.totalLeads, icon: Target, color: 'bg-purple-500/20' },
-        { title: 'Active Employees', value: stats.activeEmployees, icon: Activity, color: 'bg-green-500/20' },
-        { title: 'Total Revenue', value: formatCurrency(stats.revenue), icon: IndianRupee, color: 'bg-yellow-500/30', highlight: true },
-        { title: 'Pending Tasks', value: stats.pendingTasks, icon: CheckSquare, color: 'bg-red-500/20' },
-      ]
-    : isSupervisor
-      ? [
-          { title: 'Team Customers', value: stats.totalCustomers, icon: Users, color: 'bg-blue-500/20' },
-          { title: 'Team Leads', value: stats.totalLeads, icon: Target, color: 'bg-purple-500/20' },
-          { title: 'Team Members', value: stats.activeEmployees, icon: Activity, color: 'bg-green-500/20' },
-          { title: 'Team Revenue', value: formatCurrency(stats.revenue), icon: IndianRupee, color: 'bg-yellow-500/30', highlight: true },
-          { title: 'Team Tasks Due', value: stats.pendingTasks, icon: CheckSquare, color: 'bg-red-500/20' },
-        ]
-      : [
-          { title: 'My Customers', value: stats.totalCustomers, icon: Users, color: 'bg-blue-500/20' },
-          { title: 'My Assigned Leads', value: stats.totalLeads, icon: Target, color: 'bg-purple-500/20' },
-          { title: 'My Pending Tasks', value: stats.pendingTasks, icon: CheckSquare, color: 'bg-red-500/20' },
-        ]
+
+  // All roles see identical company-wide summary cards.
+  // Labels are always 'Total' — no 'My' or 'Team' prefix.
+  const cards = [
+    { title: 'Total Customers',  value: stats.totalCustomers,           icon: Users,        color: 'bg-blue-500/20' },
+    { title: 'Total Leads',      value: stats.totalLeads,               icon: Target,       color: 'bg-purple-500/20' },
+    { title: 'Active Employees', value: stats.activeEmployees,          icon: Activity,     color: 'bg-green-500/20' },
+    { title: 'Total Revenue',    value: formatCurrency(stats.revenue),  icon: IndianRupee,  color: 'bg-yellow-500/30', highlight: true },
+    { title: 'Pending Tasks',    value: stats.pendingTasks,             icon: CheckSquare,  color: 'bg-red-500/20' },
+  ]
 
   const actions = isAdmin
     ? [
@@ -200,18 +220,19 @@ export default function DashboardPage() {
       ? [
           { title: 'Assign Leads', description: 'Distribute leads to your team', icon: Target, color: 'bg-purple-500/20', href: '/dashboard/leads' },
           { title: 'Team Tasks', description: 'Review team workload', icon: CheckSquare, color: 'bg-green-500/20', href: '/dashboard/tasks' },
+          { title: 'View Customers', description: 'See customer details', icon: Users, color: 'bg-blue-500/20', href: '/dashboard/customers' },
           { title: 'Team Performance', description: 'Open team analytics', icon: FileText, color: 'bg-yellow-500/20', href: '/dashboard/reports' },
         ]
       : [
-          { title: 'My Leads', description: 'Update your assigned leads', icon: Target, color: 'bg-purple-500/20', href: '/dashboard/leads' },
+          { title: 'My Leads', description: 'Manage your assigned leads', icon: Target, color: 'bg-purple-500/20', href: '/dashboard/leads' },
           { title: 'My Tasks', description: 'Complete your daily tasks', icon: CheckSquare, color: 'bg-green-500/20', href: '/dashboard/tasks' },
-          { title: 'Customer Status', description: 'Update your customer records', icon: Users, color: 'bg-blue-500/20', href: '/dashboard/customers' },
+          { title: 'View Customers', description: 'See customer details', icon: Users, color: 'bg-blue-500/20', href: '/dashboard/customers' },
         ]
 
   return (
     <div className="space-y-8">
-      {/* Stats Grid */}
-      <div className={`grid grid-cols-1 md:grid-cols-2 ${isAdmin ? 'xl:grid-cols-5' : 'lg:grid-cols-3'} gap-6`}>
+      {/* Stats Grid — 5 cards, always global, same for every role */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
         {cards.map(card => <StatCard key={card.title} {...card} />)}
       </div>
 
@@ -227,8 +248,8 @@ export default function DashboardPage() {
         </div>
       </motion.div>
 
-      {/* Charts Section */}
-      {userRole !== 'User' && (
+      {/* Charts Section — Admin & Supervisor */}
+      {(isAdmin || isSupervisor) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Monthly Leads Trend (Line / Area Chart matching PDF) */}
           <motion.div
@@ -317,8 +338,8 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Recent Activity */}
-      {userRole !== 'User' && (
+      {/* Recent Activity — Admin & Supervisor */}
+      {(isAdmin || isSupervisor) && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

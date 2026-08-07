@@ -11,11 +11,11 @@ const {
 
 router.route('/')
   .get(protect, getCustomers)
-  .post(protect, authorize('Admin', 'Supervisor'), createCustomer);
+  .post(protect, authorize('Admin'), createCustomer);
 
 router.route('/:id')
   .get(protect, getCustomer)
-  .put(protect, updateCustomer)
-  .delete(protect, authorize('Admin', 'Supervisor'), deleteCustomer);
+  .put(protect, authorize('Admin'), updateCustomer)
+  .delete(protect, authorize('Admin'), deleteCustomer);
 
 module.exports = router;

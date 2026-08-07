@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middleware/auth');
+const { protect, authorize } = require('../middleware/auth');
 const {
   getTasks,
   getTask,
@@ -13,7 +13,7 @@ const {
 
 router.route('/')
   .get(protect, getTasks)
-  .post(protect, createTask);
+  .post(protect, authorize('Admin', 'Supervisor'), createTask);
 
 router.route('/stats')
   .get(protect, getTaskStats);
@@ -25,6 +25,6 @@ router.route('/:id/acknowledge')
 router.route('/:id')
   .get(protect, getTask)
   .put(protect, updateTask)
-  .delete(protect, deleteTask);
+  .delete(protect, authorize('Admin', 'Supervisor'), deleteTask);
 
 module.exports = router;

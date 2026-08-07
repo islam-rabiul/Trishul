@@ -26,14 +26,12 @@ exports.getLeads = async (req, res) => {
       query.source = source;
     }
     
-    // Role-based filtering
+    // Role-based filtering:
+    // - Admin     → no filter (sees all records)
+    // - Supervisor → no filter (sees all records)
+    // - User      → restricted to their assigned leads
     if (req.user.role === 'User') {
       query.assignedUser = req.user.id;
-    } else if (req.user.role === 'Supervisor') {
-      const supervisedUsers = await User.find({ supervisorId: req.user.id }).select('_id');
-      const userIds = supervisedUsers.map(u => u._id);
-      userIds.push(req.user.id);
-      query.assignedUser = { $in: userIds };
     }
     
     const leads = await Lead.find(query)
@@ -93,17 +91,44 @@ exports.getLead = async (req, res) => {
 
 // @desc    Create new lead
 // @route   POST /api/leads
-// @access  Private
+// @access  Private (Admin, Supervisor, User)
 exports.createLead = async (req, res) => {
   try {
     const leadData = { ...req.body };
-    if (req.user.role === 'User') leadData.assignedUser = req.user.id;
-    if (leadData.assignedUser && !(await isInScope(req.user, leadData.assignedUser))) {
+
+    // Users must always own their own lead — ignore any assignedUser sent
+    if (req.user.role === 'User') {
+      leadData.assignedUser = req.user.id;
+    }
+
+    // Server-side field validation
+    const errors = {};
+    if (!leadData.leadName || !leadData.leadName.trim()) {
+      errors.leadName = 'Lead name is required';
+    }
+    if (!leadData.assignedUser) {
+      errors.assignedUser = 'Lead must be assigned to a user';
+    }
+    if (leadData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(leadData.email)) {
+      errors.email = 'Please enter a valid email address';
+    }
+    if (leadData.estimatedValue !== undefined && leadData.estimatedValue < 0) {
+      errors.estimatedValue = 'Estimated value cannot be negative';
+    }
+    if (Object.keys(errors).length > 0) {
+      return res.status(422).json({ success: false, errors });
+    }
+
+    // Scope check: Supervisor can only assign to their own team
+    if (req.user.role === 'Supervisor' && leadData.assignedUser &&
+        !(await isInScope(req.user, leadData.assignedUser))) {
       return res.status(403).json({ success: false, message: 'You can only assign leads within your team' });
     }
+    // Admin has no scope restriction
+
     const lead = await Lead.create(leadData);
     req.io?.emit('crm_event', { entity: 'lead', action: 'create', data: lead });
-    
+
     res.status(201).json({
       success: true,
       data: lead
@@ -199,13 +224,12 @@ exports.getLeadStats = async (req, res) => {
   try {
     let query = {};
     
+    // Role-based filtering:
+    // - Admin     → no filter (sees all records)
+    // - Supervisor → no filter (sees all records)
+    // - User      → restricted to their assigned leads
     if (req.user.role === 'User') {
       query.assignedUser = req.user.id;
-    } else if (req.user.role === 'Supervisor') {
-      const supervisedUsers = await User.find({ supervisorId: req.user.id }).select('_id');
-      const userIds = supervisedUsers.map(u => u._id);
-      userIds.push(req.user.id);
-      query.assignedUser = { $in: userIds };
     }
     
     const stats = await Lead.aggregate([
